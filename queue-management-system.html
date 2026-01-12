@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediQueue - Patient System</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .status-waiting { color: #eab308; font-weight: 500; }
+        .status-completed { color: #22c55e; font-weight: 500; }
+        .token-card { transition: all 0.3s ease; }
+        .token-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .notification { position: fixed; top: 20px; right: 20px; padding: 15px 20px; border-radius: 8px; color: white; z-index: 1000; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); transform: translateX(100%); transition: transform 0.3s ease-out; }
+        .notification.show { transform: translateX(0); }
+        .notification.success { background-color: #10b981; }
+        .notification.error { background-color: #ef4444; }
+        .queue-item { transition: background-color 0.3s; }
+        .queue-item-highlight { background-color: #f0f9ff; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { background-color: #f0f9ff; } 50% { background-color: #e0f2fe; } 100% { background-color: #f0f9ff; } }
+        .severity-token { border-left: 4px solid #ef4444; background-color: #fef2f2; }
+        .normal-token { border-left: 4px solid #3b82f6; }
+        .hospital-card { transition: all 0.3s ease; cursor: pointer; }
+        .hospital-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .hospital-card.selected { border: 2px solid #3b82f6; background-color: #f0f9ff; }
+        .slot-info { background: #f8fafc; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .priority-slot { border-left: 4px solid #ef4444; background: #fef2f2; }
+        .normal-slot { border-left: 4px solid #3b82f6; background: #f0f9ff; }
+        .form-input:invalid { border-color: #ef4444; }
+        .form-input:valid { border-color: #10b981; }
+        .doctor-info { background: #f0f9ff; border-radius: 8px; padding: 10px; margin-top: 5px; font-size: 0.875rem; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <nav class="bg-blue-600 text-white p-4 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold"><i class="fas fa-hospital mr-2"></i>MediQueue</h1>
+            <div class="flex items-center space-x-4">
+                <span id="currentDate" class="text-blue-100"></span>
+                <button id="adminBtn" class="bg-white text-blue-600 px-4 py-2 rounded-md font-semibold">
+                    <i class="fas fa-user-cog mr-2"></i>Admin Panel
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto p-6">
+        <!-- Locality and Hospital Selection -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">Select Your Location</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="locality" class="block text-gray-700 mb-2">Select Locality *</label>
+                    <select id="locality" class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 form-input" required>
+                        <option value="" disabled selected>Choose your locality</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="hospital" class="block text-gray-700 mb-2">Select Hospital *</label>
+                    <select id="hospital" class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 form-input" required disabled>
+                        <option value="" disabled selected>First select a locality</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Hospital Details -->
+            <div id="hospitalDetails" class="mt-4 p-4 bg-blue-50 rounded-lg hidden">
+                <h3 class="font-semibold text-lg" id="hospitalName"></h3>
+                <p class="text-gray-600" id="hospitalAddress"></p>
+                <div class="grid grid-cols-2 gap-4 mt-2">
+                    <div>
+                        <span class="text-sm text-gray-500">Specialties:</span>
+                        <p class="font-medium" id="hospitalSpecialties"></p>
+                    </div>
+                    <div>
+                        <span class="text-sm text-gray-500">Contact:</span>
+                        <p class="font-medium" id="hospitalContact"></p>
+                    </div>
+                </div>
+                
+                <!-- Available Doctors -->
+                <div class="mt-4">
+                    <h4 class="font-semibold mb-2">Available Doctors Today</h4>
+                    <div id="availableDoctors" class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <!-- Doctors will be populated here -->
+                    </div>
+                </div>
+                
+                <!-- Slot Availability -->
+                <div class="mt-4">
+                    <h4 class="font-semibold mb-2">Available Slots for Today</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="priority-slot">
+                            <span class="text-sm text-red-600 font-semibold">Priority Slots:</span>
+                            <p class="font-bold text-red-700" id="availablePrioritySlots">0</p>
+                            <p class="text-xs text-red-600">For emergency cases</p>
+                        </div>
+                        <div class="normal-slot">
+                            <span class="text-sm text-blue-600 font-semibold">Normal Slots:</span>
+                            <p class="font-bold text-blue-700" id="availableNormalSlots">0</p>
+                            <p class="text-xs text-blue-600">For routine checkups</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Appointment Booking -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800">Book Your Appointment</h2>
+                <form id="appointmentForm" novalidate>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="patientName" class="block text-gray-700 mb-2">Full Name *</label>
+                            <input type="text" id="patientName" name="patientName" class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 form-input" required minlength="2">
+                            <div class="text-red-500 text-sm mt-1 hidden" id="patientNameError">Please enter your full name</div>
+                        </div>
+                        <div>
+                            <label for="mobileNumber" class="block text-gray-700 mb-2">Mobile Number *</label>
+                            <input type="tel" id="mobileNumber" name="mobileNumber" class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 form-input" required pattern="[0-9]{10}" minlength="10" maxlength="10">
+                            <div class="text-red-500 text-sm mt-1 hidden" id="mobileNumberError">Please enter a valid 10-digit mobile number</div>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="symptoms" class="block text-gray-700 mb-2">Describe Your Symptoms *</label>
+                            <textarea id="symptoms" name="symptoms" class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 form-input" rows="3" placeholder="Please describe your symptoms in detail. This helps us determine if you need priority care. Examples: 'chest pain', 'fever for 3 days', 'minor headache'..." required minlength="10"></textarea>
+                            <div class="text-red-500 text-sm mt-1 hidden" id="symptomsError">Please describe your symptoms (minimum 10 characters)</div>
+                            <p class="text-sm text-gray-500 mt-1">* Based on your symptoms, we'll automatically assign you to priority or normal care</p>
+                        </div>
+                        <div>
+                            <label for="appointmentDate" class="block text-gray-700 mb-2">Appointment Date *</label>
+                            <input type="date" id="appointmentDate" name="appointmentDate" class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 form-input" required>
+                            <div class="text-red-500 text-sm mt-1 hidden" id="appointmentDateError">Please select an appointment date</div>
+                        </div>
+                        <div class="md:col-span-2">
+                            <div id="severityDetection" class="p-4 rounded-lg bg-gray-50 hidden">
+                                <h4 class="font-semibold text-lg mb-2">Severity Assessment</h4>
+                                <p id="severityResult" class="text-lg"></p>
+                                <p id="severityExplanation" class="text-sm text-gray-600 mt-1"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white p-3 rounded-md font-semibold mt-6 hover:bg-blue-700 transition duration-300 disabled:bg-blue-300 disabled:cursor-not-allowed" id="submitBtn">
+                        <i class="fas fa-calendar-plus mr-2"></i>Book Appointment
+                    </button>
+                </form>
+            </div>
+
+            <!-- Current Queue Display -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800">Current Queue</h2>
+                <div id="queueStatus" class="mb-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Total Patients:</span>
+                        <span id="totalPatients" class="font-semibold">0</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Waiting:</span>
+                        <span id="waitingPatients" class="font-semibold text-yellow-600">0</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Completed:</span>
+                        <span id="completedPatients" class="font-semibold text-green-600">0</span>
+                    </div>
+                    <div class="flex justify-between items-center mt-2 pt-2 border-t">
+                        <span class="text-gray-600">Available Doctors:</span>
+                        <span id="availableDoctorsCount" class="font-semibold text-blue-600">0</span>
+                    </div>
+                </div>
+                <div id="queueList" class="space-y-3 max-h-96 overflow-y-auto">
+                    <p class="text-gray-500 text-center py-4">No patients in queue</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Token Display Section -->
+        <div id="tokenDisplay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+            <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+                <div class="text-center">
+                    <i class="fas fa-check-circle text-green-500 text-5xl mb-4"></i>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-2">Appointment Booked!</h3>
+                    <div id="tokenDetails" class="bg-gray-50 p-4 rounded-lg mb-4">
+                        <p class="text-lg font-semibold" id="displayToken"></p>
+                        <p class="text-gray-600" id="displayPatientName"></p>
+                        <p class="text-gray-600" id="displayHospitalName"></p>
+                        <p class="text-gray-600" id="displayAppointmentType"></p>
+                        <p class="text-gray-600" id="displayDoctorName"></p>
+                        <p class="text-gray-600" id="displayAppointmentTime"></p>
+                    </div>
+                    <button id="closeTokenDisplay" class="bg-blue-600 text-white px-6 py-2 rounded-md font-semibold hover:bg-blue-700 transition duration-300">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notificationContainer"></div>
+
+    <script>
+        // Global variables
+        let currentHospitalId = null;
+        let currentHospitalData = null;
+
+        // DOM Elements
+        const localitySelect = document.getElementById('locality');
+        const hospitalSelect = document.getElementById('hospital');
+        const hospitalDetails = document.getElementById('hospitalDetails');
+        const hospitalName = document.getElementById('hospitalName');
+        const hospitalAddress = document.getElementById('hospitalAddress');
+        const hospitalSpecialties = document.getElementById('hospitalSpecialties');
+        const hospitalContact = document.getElementById('hospitalContact');
+        const availableDoctorsContainer = document.getElementById('availableDoctors');
+        const availablePrioritySlots = document.getElementById('availablePrioritySlots');
+        const availableNormalSlots = document.getElementById('availableNormalSlots');
+        const appointmentForm = document.getElementById('appointmentForm');
+        const patientNameInput = document.getElementById('patientName');
+        const mobileNumberInput = document.getElementById('mobileNumber');
+        const symptomsInput = document.getElementById('symptoms');
+        const appointmentDateInput = document.getElementById('appointmentDate');
+        const severityDetection = document.getElementById('severityDetection');
+        const severityResult = document.getElementById('severityResult');
+        const severityExplanation = document.getElementById('severityExplanation');
+        const queueList = document.getElementById('queueList');
+        const totalPatients = document.getElementById('totalPatients');
+        const waitingPatients = document.getElementById('waitingPatients');
+        const completedPatients = document.getElementById('completedPatients');
+        const availableDoctorsCount = document.getElementById('availableDoctorsCount');
+        const tokenDisplay = document.getElementById('tokenDisplay');
+        const displayToken = document.getElementById('displayToken');
+        const displayPatientName = document.getElementById('displayPatientName');
+        const displayHospitalName = document.getElementById('displayHospitalName');
+        const displayAppointmentType = document.getElementById('displayAppointmentType');
+        const displayDoctorName = document.getElementById('displayDoctorName');
+        const displayAppointmentTime = document.getElementById('displayAppointmentTime');
+        const closeTokenDisplay = document.getElementById('closeTokenDisplay');
+        const adminBtn = document.getElementById('adminBtn');
+        const currentDateElement = document.getElementById('currentDate');
+        const submitBtn = document.getElementById('submitBtn');
+
+        // Error elements
+        const patientNameError = document.getElementById('patientNameError');
+        const mobileNumberError = document.getElementById('mobileNumberError');
+        const symptomsError = document.getElementById('symptomsError');
+        const appointmentDateError = document.getElementById('appointmentDateError');
+
+        // Initialize date
+        function initializeDate() {
+            const now = new Date();
+            currentDateElement.textContent = now.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            
+            // Set minimum date for appointment date input
+            const today = new Date().toISOString().split('T')[0];
+            appointmentDateInput.min = today;
+            appointmentDateInput.value = today;
+        }
+
+        // Show notification
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle'} mr-2"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.getElementById('notificationContainer').appendChild(notification);
+            
+            setTimeout(() => notification.classList.add('show'), 100);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+
+        // Validate form fields
+        function validateForm() {
+            let isValid = true;
+
+            // Validate patient name
+            if (!patientNameInput.value.trim() || patientNameInput.value.trim().length < 2) {
+                patientNameError.classList.remove('hidden');
+                patientNameInput.classList.add('border-red-500');
+                isValid = false;
+            } else {
+                patientNameError.classList.add('hidden');
+                patientNameInput.classList.remove('border-red-500');
+            }
+
+            // Validate mobile number
+            const mobileRegex = /^[0-9]{10}$/;
+            if (!mobileNumberInput.value.trim() || !mobileRegex.test(mobileNumberInput.value.trim())) {
+                mobileNumberError.classList.remove('hidden');
+                mobileNumberInput.classList.add('border-red-500');
+                isValid = false;
+            } else {
+                mobileNumberError.classList.add('hidden');
+                mobileNumberInput.classList.remove('border-red-500');
+            }
+
+            // Validate symptoms
+            if (!symptomsInput.value.trim() || symptomsInput.value.trim().length < 10) {
+                symptomsError.classList.remove('hidden');
+                symptomsInput.classList.add('border-red-500');
+                isValid = false;
+            } else {
+                symptomsError.classList.add('hidden');
+                symptomsInput.classList.remove('border-red-500');
+            }
+
+            // Validate appointment date
+            if (!appointmentDateInput.value) {
+                appointmentDateError.classList.remove('hidden');
+                appointmentDateInput.classList.add('border-red-500');
+                isValid = false;
+            } else {
+                appointmentDateError.classList.add('hidden');
+                appointmentDateInput.classList.remove('border-red-500');
+            }
+
+            // Validate hospital selection
+            if (!currentHospitalId) {
+                showNotification('Please select a hospital first', 'error');
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        // Fetch localities
+        async function fetchLocalities() {
+            try {
+                const response = await fetch('/api/localities');
+                const data = await response.json();
+                
+                if (data.success) {
+                    localitySelect.innerHTML = '<option value="" disabled selected>Choose your locality</option>' +
+                        data.localities.map(locality => 
+                            `<option value="${locality}">${locality}</option>`
+                        ).join('');
+                } else {
+                    showNotification('Failed to fetch localities', 'error');
+                }
+            } catch (error) {
+                showNotification('Failed to fetch localities', 'error');
+            }
+        }
+
+        // Fetch hospitals for locality
+        async function fetchHospitals(locality) {
+            try {
+                const response = await fetch(`/api/hospitals/${locality}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    hospitalSelect.innerHTML = '<option value="" disabled selected>Select a hospital</option>' +
+                        data.hospitals.map(hospital => 
+                            `<option value="${hospital.id}">${hospital.name}</option>`
+                        ).join('');
+                    hospitalSelect.disabled = false;
+                } else {
+                    showNotification('Failed to fetch hospitals', 'error');
+                }
+            } catch (error) {
+                showNotification('Failed to fetch hospitals', 'error');
+            }
+        }
+
+        // Fetch hospital details
+        async function fetchHospitalDetails(hospitalId) {
+            try {
+                const response = await fetch(`/api/hospital/${hospitalId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentHospitalId = hospitalId;
+                    currentHospitalData = data.hospital;
+                    
+                    hospitalName.textContent = data.hospital.name;
+                    hospitalAddress.textContent = data.hospital.address;
+                    hospitalSpecialties.textContent = data.hospital.specialties.join(', ');
+                    hospitalContact.textContent = data.hospital.contact;
+                    availablePrioritySlots.textContent = data.hospital.availableSeveritySlots;
+                    availableNormalSlots.textContent = data.hospital.availableNormalSlots;
+                    
+                    hospitalDetails.classList.remove('hidden');
+                    
+                    // Fetch available doctors
+                    await fetchAvailableDoctors(hospitalId);
+                    
+                    // Enable submit button
+                    submitBtn.disabled = false;
+                    
+                    // Fetch queue for this hospital
+                    fetchQueue(hospitalId);
+                } else {
+                    showNotification('Failed to fetch hospital details', 'error');
+                }
+            } catch (error) {
+                showNotification('Failed to fetch hospital details', 'error');
+            }
+        }
+
+        // Fetch available doctors for hospital
+        async function fetchAvailableDoctors(hospitalId) {
+            try {
+                const response = await fetch(`/api/doctors/${hospitalId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    availableDoctorsContainer.innerHTML = '';
+                    
+                    if (data.doctors.length === 0) {
+                        availableDoctorsContainer.innerHTML = '<p class="text-gray-500">No doctors available today</p>';
+                    } else {
+                        data.doctors.forEach(doctor => {
+                            const doctorElement = document.createElement('div');
+                            doctorElement.className = 'doctor-info';
+                            doctorElement.innerHTML = `
+                                <div class="font-semibold">${doctor.name}</div>
+                                <div class="text-gray-600">${doctor.specialty}</div>
+                            `;
+                            availableDoctorsContainer.appendChild(doctorElement);
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to fetch doctors:', error);
+                availableDoctorsContainer.innerHTML = '<p class="text-gray-500">Unable to load doctor information</p>';
+            }
+        }
+
+        // Fetch queue
+        async function fetchQueue(hospitalId = null) {
+            try {
+                const url = hospitalId ? `/api/queue/${hospitalId}` : '/api/queue';
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateQueueDisplay(data.queue);
+                    totalPatients.textContent = data.totalCount;
+                    waitingPatients.textContent = data.waitingCount;
+                    completedPatients.textContent = data.completedCount;
+                    
+                    // Count unique doctors
+                    const doctorIds = new Set();
+                    data.queue.filter(p => p.status === 'Waiting').forEach(patient => {
+                        if (patient.doctorId) {
+                            doctorIds.add(patient.doctorId);
+                        }
+                    });
+                    availableDoctorsCount.textContent = doctorIds.size;
+                }
+            } catch (error) {
+                console.error('Failed to fetch queue:', error);
+            }
+        }
+
+        // Update queue display
+        function updateQueueDisplay(queue) {
+            if (queue.length === 0) {
+                queueList.innerHTML = '<p class="text-gray-500 text-center py-4">No patients in queue</p>';
+                return;
+            }
+            
+            queueList.innerHTML = queue.map(patient => `
+                <div class="queue-item p-3 rounded-lg border ${patient.isSeverity ? 'severity-token' : 'normal-token'}">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <span class="font-semibold ${patient.isSeverity ? 'text-red-600' : 'text-blue-600'}">${patient.token}</span>
+                            <span class="text-xs ${patient.isSeverity ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'} px-2 py-1 rounded-full ml-2">
+                                ${patient.isSeverity ? 'Priority' : 'Normal'}
+                            </span>
+                        </div>
+                        <span class="status-${patient.status.toLowerCase()}">${patient.status}</span>
+                    </div>
+                    <div class="mt-2 text-sm">
+                        <p class="font-medium">${patient.patientName}</p>
+                        <p class="text-gray-600">${patient.hospitalName}</p>
+                        <p class="text-gray-500 text-xs">Doctor: ${patient.doctorName || 'To be assigned'}</p>
+                        <p class="text-gray-500 text-xs">${formatTime(patient.appointmentTime || patient.createdAt)}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Format time for display
+        function formatTime(timeString) {
+            if (!timeString) return 'Time not available';
+            
+            try {
+                // If it's already a formatted time string, return as is
+                if (typeof timeString === 'string' && timeString.includes(':')) {
+                    return timeString;
+                }
+                
+                // If it's an ISO string, format it
+                const date = new Date(timeString);
+                return date.toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                });
+            } catch (error) {
+                return 'Time not available';
+            }
+        }
+        
+        /* Detect severity based on symptoms
+        function detectSeverity(symptoms) {
+            if (!symptoms || symptoms.trim() === '') {
+                return { isSeverity: false, explanation: 'Please describe your symptoms' };
+            }
+            
+            const severeKeywords = [
+                'chest pain', 'heart attack','corona','cancer','laddu', 'stroke', 'severe bleeding', 'unconscious',
+                'difficulty breathing', 'choking', 'severe burn', 'head injury',
+                'broken bone', 'severe pain', 'emergency', 'critical', 'fainting',
+                'seizure', 'paralysis', 'poisoning', 'allergic reaction', 'anaphylaxis'
+            ];
+            
+            const symptomsLower = symptoms.toLowerCase();
+            let severityLevel = 'normal';
+            let explanation = 'This appears to be a routine medical issue.';
+            
+            for (const keyword of severeKeywords) {
+                if (symptomsLower.includes(keyword)) {
+                    severityLevel = 'priority';
+                    explanation = 'Based on your symptoms, you need priority medical attention.';
+                    break;
+                }
+            }
+            
+            return {
+                isSeverity: severityLevel === 'priority',
+                level: severityLevel,
+                explanation: explanation
+            };
+        }
+        */
+       
+        import dotenv from "dotenv";
+        dotenv.config();
+        import OpenAI from "openai";
+
+        const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+        export async function detectSeverity(symptoms) {
+            if (!symptoms || symptoms.trim() === '') {
+                return { isSeverity: false, explanation: 'Please describe your symptoms' };
+            }
+
+            const prompt = `
+        You are an intelligent medical triage assistant.
+        Analyze the following patient symptom description and decide if it requires **immediate medical attention** (high severity) or not (low severity).
+
+        Give your answer in **strict JSON format**:
+        {
+        "isSeverity": true/false,
+        "level": "priority" or "normal",
+        "explanation": "short explanation in plain language"
+        }
+
+        Symptom description: "${symptoms}"
+        `;
+
+            try {
+                const completion = await openai.chat.completions.create({
+                    model: "gpt-4o-mini",
+                    messages: [{ role: "user", content: prompt }],
+                    temperature: 0.2,
+                });
+
+                const content = completion.choices[0].message.content.trim();
+                const result = JSON.parse(content);
+                return result;
+
+            } catch (error) {
+                console.error("Error detecting severity:", error);
+                return {
+                    isSeverity: false,
+                    level: 'normal',
+                    explanation: 'Unable to determine severity. Please describe more clearly or consult a doctor.'
+                };
+            }
+        }
+
+        // Real-time validation
+        function setupRealTimeValidation() {
+            // Patient name validation
+            patientNameInput.addEventListener('input', () => {
+                if (patientNameInput.value.trim().length >= 2) {
+                    patientNameError.classList.add('hidden');
+                    patientNameInput.classList.remove('border-red-500');
+                    patientNameInput.classList.add('border-green-500');
+                } else {
+                    patientNameInput.classList.remove('border-green-500');
+                }
+            });
+
+            // Mobile number validation
+            mobileNumberInput.addEventListener('input', () => {
+                const mobileRegex = /^[0-9]{10}$/;
+                if (mobileRegex.test(mobileNumberInput.value.trim())) {
+                    mobileNumberError.classList.add('hidden');
+                    mobileNumberInput.classList.remove('border-red-500');
+                    mobileNumberInput.classList.add('border-green-500');
+                } else {
+                    mobileNumberInput.classList.remove('border-green-500');
+                }
+            });
+
+            // Symptoms validation
+            symptomsInput.addEventListener('input', () => {
+                if (symptomsInput.value.trim().length >= 10) {
+                    symptomsError.classList.add('hidden');
+                    symptomsInput.classList.remove('border-red-500');
+                    symptomsInput.classList.add('border-green-500');
+                } else {
+                    symptomsInput.classList.remove('border-green-500');
+                }
+
+                // Severity detection
+                const symptoms = symptomsInput.value.trim();
+                if (symptoms.length > 10) {
+                    const severity = detectSeverity(symptoms);
+                    severityDetection.classList.remove('hidden');
+                    
+                    if (severity.isSeverity) {
+                        severityResult.innerHTML = '<i class="fas fa-exclamation-triangle text-red-500 mr-2"></i>Priority Care Needed';
+                        severityResult.className = 'text-red-600 font-semibold';
+                        severityDetection.className = 'p-4 rounded-lg bg-red-50 border border-red-200';
+                    } else {
+                        severityResult.innerHTML = '<i class="fas fa-check-circle text-green-500 mr-2"></i>Normal Care';
+                        severityResult.className = 'text-green-600 font-semibold';
+                        severityDetection.className = 'p-4 rounded-lg bg-green-50 border border-green-200';
+                    }
+                    
+                    severityExplanation.textContent = severity.explanation;
+                } else {
+                    severityDetection.classList.add('hidden');
+                }
+            });
+
+            // Date validation
+            appointmentDateInput.addEventListener('change', () => {
+                if (appointmentDateInput.value) {
+                    appointmentDateError.classList.add('hidden');
+                    appointmentDateInput.classList.remove('border-red-500');
+                    appointmentDateInput.classList.add('border-green-500');
+                } else {
+                    appointmentDateInput.classList.remove('border-green-500');
+                }
+            });
+        }
+
+        // Event Listeners
+        localitySelect.addEventListener('change', (e) => {
+            if (e.target.value) {
+                fetchHospitals(e.target.value);
+                hospitalDetails.classList.add('hidden');
+                currentHospitalId = null;
+                submitBtn.disabled = true;
+            }
+        });
+
+        hospitalSelect.addEventListener('change', (e) => {
+            if (e.target.value) {
+                fetchHospitalDetails(e.target.value);
+            }
+        });
+
+        appointmentForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Validate form
+            if (!validateForm()) {
+                showNotification('Please fill all required fields correctly', 'error');
+                return;
+            }
+            
+            if (!currentHospitalId) {
+                showNotification('Please select a hospital first', 'error');
+                return;
+            }
+
+            const appointmentData = {
+                patientName: patientNameInput.value.trim(),
+                mobileNumber: mobileNumberInput.value.trim(),
+                hospitalId: currentHospitalId,
+                symptoms: symptomsInput.value.trim(),
+                appointmentDate: appointmentDateInput.value
+            };
+
+            try {
+                // Show loading state
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Booking...';
+                submitBtn.disabled = true;
+
+                const response = await fetch('/api/add-appointment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(appointmentData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification('Appointment booked successfully!', 'success');
+                    
+                    // Display token with doctor information
+                    displayToken.textContent = `Token: ${data.patient.token}`;
+                    displayPatientName.textContent = `Patient: ${data.patient.patientName}`;
+                    displayHospitalName.textContent = `Hospital: ${data.patient.hospitalName}`;
+                    displayAppointmentType.textContent = `Type: ${data.patient.isSeverity ? 'Priority Care' : 'Normal Care'}`;
+                    displayDoctorName.textContent = `Doctor: ${data.patient.doctorName || 'To be assigned'}`;
+                    displayAppointmentTime.textContent = `Time: ${formatTime(data.patient.appointmentTime || data.patient.createdAt)}`;
+                    
+                    tokenDisplay.classList.remove('hidden');
+                    
+                    // Reset form
+                    appointmentForm.reset();
+                    severityDetection.classList.add('hidden');
+                    initializeDate();
+                    
+                    // Refresh queue
+                    fetchQueue(currentHospitalId);
+                    fetchHospitalDetails(currentHospitalId);
+                } else {
+                    showNotification(data.error || 'Failed to book appointment', 'error');
+                }
+            } catch (error) {
+                console.error('Error booking appointment:', error);
+                showNotification('Network error. Please try again.', 'error');
+            } finally {
+                // Reset button state
+                submitBtn.innerHTML = '<i class="fas fa-calendar-plus mr-2"></i>Book Appointment';
+                submitBtn.disabled = !currentHospitalId;
+            }
+        });
+
+        closeTokenDisplay.addEventListener('click', () => {
+            tokenDisplay.classList.add('hidden');
+        });
+
+        adminBtn.addEventListener('click', () => {
+            window.location.href = '/admin';
+        });
+
+        // Initialize
+        function initializeApp() {
+            initializeDate();
+            fetchLocalities();
+            fetchQueue();
+            setupRealTimeValidation();
+            
+            // Initially disable submit button until hospital is selected
+            submitBtn.disabled = true;
+        }
+
+        // Start the application
+        initializeApp();
+
+        // Refresh queue every 10 seconds
+        setInterval(() => {
+            if (currentHospitalId) {
+                fetchQueue(currentHospitalId);
+            }
+        }, 10000);
+    </script>
+    <script src="/js/quantum-security-client.js"></script>
+
+<script>
+// Auto-initialize quantum security for demo users
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize for demo patient (you can modify this based on your user system)
+    setTimeout(() => {
+        if (window.quantumSecurity && !window.quantumSecurity.isInitialized) {
+            window.quantumSecurity.initialize('demo-patient-001', 'patient')
+                .then(success => {
+                    if (success) {
+                        console.log('🔐 Quantum security initialized for demo patient');
+                    }
+                });
+        }
+    }, 2000);
+});
+</script>
+
+</body>
+</html>

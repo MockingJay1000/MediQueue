@@ -1,0 +1,66 @@
+[
+  {
+    "id": 1,
+    "name": "General Hospital",
+    "locality": "Hyderabad",
+    "address": "123 Main Street, Hyderabad",
+    "specialties": [
+      "Cardiology",
+      "Orthopedics",
+      "Pediatrics",
+      "Neurology"
+    ],
+    "doctors": 8,
+    "contact": "+1-555-0101",
+    "normalSlots": 50,
+    "severitySlots": 10
+  },
+  {
+    "id": 2,
+    "name": "Vandalur Medical Center",
+    "locality": "Vandalur",
+    "address": "456 Oak Avenue, Vandalur",
+    "specialties": [
+      "Cardiology",
+      "Dermatology",
+      "ENT",
+      "General Surgery"
+    ],
+    "doctors": 6,
+    "contact": "+1-555-0102",
+    "normalSlots": 40,
+    "severitySlots": 8
+  },
+  {
+    "id": 3,
+    "name": "Chettinad Hospital",
+    "locality": "Chennai",
+    "address": "789 Pine Road, Chennai",
+    "specialties": [
+      "Pediatrics",
+      "Gynecology",
+      "Ophthalmology",
+      "Dentistry"
+    ],
+    "doctors": 5,
+    "contact": "+1-555-0103",
+    "normalSlots": 35,
+    "severitySlots": 6
+  },
+  {
+    "id": 4,
+    "name": "Keelambaakam Healthcare",
+    "locality": "Keelambaakam",
+    "address": "321 Elm Street, Keelambaakam",
+    "specialties": [
+      "Neurology",
+      "Psychiatry",
+      "Physiotherapy",
+      "Urology"
+    ],
+    "doctors": 7,
+    "contact": "+1-555-0104",
+    "normalSlots": 45,
+    "severitySlots": 9
+  }
+]

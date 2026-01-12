@@ -1,0 +1,240 @@
+{
+  "queue": [
+    {
+      "token": "S-1-001",
+      "patientName": "nice",
+      "mobileNumber": "8979799666",
+      "hospitalId": 1,
+      "hospitalName": "General Hospital",
+      "doctorId": 1,
+      "doctorName": "Dr. Sarah",
+      "appointmentType": "severity",
+      "isSeverity": true,
+      "symptoms": "cancerand cold",
+      "appointmentDate": "2025-10-14",
+      "appointmentTime": "03:31 PM",
+      "status": "Waiting",
+      "priority": 1,
+      "slotNumber": 1,
+      "slotType": "priority",
+      "createdAt": "2025-10-14T10:01:42.827Z"
+    },
+    {
+      "token": "N-3-001",
+      "patientName": "saketh reddy",
+      "mobileNumber": "9791199889",
+      "hospitalId": 3,
+      "hospitalName": "Chettinad Hospital",
+      "doctorId": 8,
+      "doctorName": "Dr. David",
+      "appointmentType": "normal",
+      "isSeverity": false,
+      "symptoms": "minor headache",
+      "appointmentDate": "2025-10-14",
+      "appointmentTime": "03:32 PM",
+      "status": "Waiting",
+      "priority": 2,
+      "slotNumber": 3,
+      "slotType": "normal",
+      "createdAt": "2025-10-14T10:02:08.682Z"
+    },
+    {
+      "token": "S-1-002",
+      "patientName": "hillon",
+      "mobileNumber": "8979799666",
+      "hospitalId": 1,
+      "hospitalName": "General Hospital",
+      "doctorId": 2,
+      "doctorName": "Dr. Michael",
+      "appointmentType": "severity",
+      "isSeverity": true,
+      "symptoms": "chest pain and cancer",
+      "appointmentDate": "2025-10-14",
+      "appointmentTime": "04:00 PM",
+      "status": "Waiting",
+      "priority": 1,
+      "slotNumber": 1,
+      "slotType": "priority",
+      "createdAt": "2025-10-14T10:30:46.917Z"
+    }
+  ],
+  "tokenCounter": 5,
+  "lastResetDate": "Sun Sep 21 2025",
+  "dailyTokens": {
+    "2025-09-21": 7,
+    "2025-09-22": 4,
+    "Sun Sep 21 2025": 0,
+    "2025-09-25": 1,
+    "2025-09-26": 1,
+    "2025-09-27": 1,
+    "2025-09-25-3-normal": 1,
+    "2025-09-25-1-severity": 1,
+    "2025-09-25-2-normal": 1,
+    "2025-09-25-2-severity": 1,
+    "2025-09-25-2": 2,
+    "2025-09-25-3": 1,
+    "2025-09-26-3": 1,
+    "2025-09-26-2": 2,
+    "2025-09-30-2": 2,
+    "2025-09-30-1": 1,
+    "2025-10-14-1": 3,
+    "2025-10-14-3": 1
+  },
+  "lastResetCheck": "Sun Sep 21 2025",
+  "slotAllocations": {
+    "4-2025-09-25": {
+      "prioritySlots": [
+        null,
+        null
+      ],
+      "normalSlots": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "nextSlotNumber": 1
+    },
+    "2-2025-09-25": {
+      "prioritySlots": [
+        null,
+        null
+      ],
+      "normalSlots": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "nextSlotNumber": 1
+    },
+    "3-2025-09-25": {
+      "prioritySlots": [
+        null,
+        null
+      ],
+      "normalSlots": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "nextSlotNumber": 1
+    },
+    "1-2025-09-25": {
+      "prioritySlots": [
+        null,
+        null
+      ],
+      "normalSlots": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "nextSlotNumber": 1
+    },
+    "3-2025-09-26": {
+      "prioritySlots": [
+        null,
+        null
+      ],
+      "normalSlots": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "nextSlotNumber": 1
+    },
+    "2-2025-09-26": {
+      "prioritySlots": [
+        null,
+        null
+      ],
+      "normalSlots": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "nextSlotNumber": 1
+    },
+    "2-2025-09-30": {
+      "prioritySlots": [
+        null,
+        null
+      ],
+      "normalSlots": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "nextSlotNumber": 1
+    },
+    "1-2025-09-30": {
+      "prioritySlots": [
+        null,
+        null
+      ],
+      "normalSlots": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "nextSlotNumber": 1
+    },
+    "1-2025-10-14": {
+      "prioritySlots": [
+        null,
+        null
+      ],
+      "normalSlots": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "nextSlotNumber": 1
+    },
+    "3-2025-10-14": {
+      "prioritySlots": [
+        null,
+        null
+      ],
+      "normalSlots": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "nextSlotNumber": 1
+    },
+    "2-2025-10-14": {
+      "prioritySlots": [
+        null,
+        null
+      ],
+      "normalSlots": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "nextSlotNumber": 1
+    }
+  }
+}

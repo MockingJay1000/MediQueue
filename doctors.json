@@ -1,0 +1,86 @@
+[
+  {
+    "id": 1,
+    "name": "Dr. Sarah",
+    "specialty": "Cardiology",
+    "hospitalId": 1,
+    "available": true
+  },
+  {
+    "id": 2,
+    "name": "Dr. Michael",
+    "specialty": "Orthopedics",
+    "hospitalId": 1,
+    "available": true
+  },
+  {
+    "id": 3,
+    "name": "Dr. Emily",
+    "specialty": "Pediatrics",
+    "hospitalId": 1,
+    "available": true
+  },
+  {
+    "id": 4,
+    "name": "Dr. Robert",
+    "specialty": "Neurology",
+    "hospitalId": 1,
+    "available": true
+  },
+  {
+    "id": 5,
+    "name": "Dr. Lisa",
+    "specialty": "Cardiology",
+    "hospitalId": 2,
+    "available": true
+  },
+  {
+    "id": 6,
+    "name": "Dr. James",
+    "specialty": "Dermatology",
+    "hospitalId": 2,
+    "available": true
+  },
+  {
+    "id": 7,
+    "name": "Dr. Maria",
+    "specialty": "ENT",
+    "hospitalId": 2,
+    "available": true
+  },
+  {
+    "id": 8,
+    "name": "Dr. David",
+    "specialty": "Pediatrics",
+    "hospitalId": 3,
+    "available": true
+  },
+  {
+    "id": 9,
+    "name": "Dr. Jennifer",
+    "specialty": "Gynecology",
+    "hospitalId": 3,
+    "available": true
+  },
+  {
+    "id": 10,
+    "name": "Dr. Thomas",
+    "specialty": "Neurology",
+    "hospitalId": 4,
+    "available": true
+  },
+  {
+    "id": 11,
+    "name": "Dr. Susan",
+    "specialty": "Psychiatry",
+    "hospitalId": 4,
+    "available": true
+  },
+  {
+    "id": 12,
+    "name": "Dr. Kevin",
+    "specialty": "Physiotherapy",
+    "hospitalId": 4,
+    "available": true
+  }
+]
