@@ -23,4 +23,7 @@ python app.py
 <img width="1105" height="766" alt="image" src="https://github.com/user-attachments/assets/6e3794ef-1c73-420f-b310-70398f4e62af" />
 Admin Window:
 <img width="1889" height="907" alt="image" src="https://github.com/user-attachments/assets/0a25604b-93cc-490e-ba97-0cc5bd59566d" />
+Notification using Twillow:
+<img width="1079" height="880" alt="image" src="https://github.com/user-attachments/assets/2fa46f56-474b-418a-8774-38f47cd1fcae" />
+
 
